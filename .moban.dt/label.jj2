@@ -1,0 +1,3 @@
+LABEL name={{ image.name }} \
+      version={{ image.version }} \
+      maintainer="{{ image.maintainer }}"

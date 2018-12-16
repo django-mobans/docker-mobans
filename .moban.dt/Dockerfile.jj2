@@ -1,0 +1,100 @@
+{% set _any = False %}
+{% if image.parent %}
+FROM {{ image.parent }}
+{% elif image.python_version and image.node_version %}
+FROM okdocker/pynode:{{ image.python_version }}-{{ image.node_version }}.x
+{% else %}
+FROM scratch
+{% endif %}
+
+{% include 'label.jj2' %}
+
+{% if image.env %}
+ENV {% for key, value in image.env.items() %}
+{%     if value.__class__.__name__ == 'list' %}
+{{ key }}={% for item in value %}{{ item }}{% if not loop.last %}:{% endif %}{% endfor %}
+{%     else %}
+{{ key }}={{ value }}
+{%-    endif %}{% if not loop.last %} \
+    {%+ endif %}
+{%   endfor %}
+
+
+{% endif %}
+{% if image.apt %}
+{%   set _any = True %}
+RUN apt-get update && apt-get install --no-install-recommends -y \
+{%   for dep in image.apt %}
+  {{ dep }} \
+{%   endfor %}
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+{% elif image.apk %}
+{%   set _any = True %}
+RUN apk add --no-cache \
+{%   for dep in image.apk %}
+  {{ dep }}{% if not loop.last %} \{% endif %}
+
+{% endfor %}
+
+{% endif %}
+{% if image.pip %}
+RUN \
+{%   set _any = True %}
+{%   for dep in image.pip %}
+  pip install --no-cache-dir '{{ dep }}'{% if not loop.last %} && \{% endif %}
+
+{%   endfor %}
+
+{% endif %}
+{% if image.npm %}
+{%   set _any = True %}
+RUN npm install -g \
+{%   for dep in image.npm %}
+  {{ dep }} \
+{%   endfor %}
+  && npm cache clear --force
+
+{% endif %}
+{% if image['copy'].__class__.__name__ == 'list' %}
+{% for entry in image['copy'] %}
+{%   set _any = True %}
+{%   for src, dest in entry.items() %}
+COPY {{ src }} {{ dest }}
+
+{%   endfor %}
+{% endfor %}
+{% endif %}
+{% for cmd in image.layers %}
+{% set _any = True %}
+RUN {{ cmd }}
+
+{% endfor %}
+{% if image.run %}
+{% if image.run.cmd %}
+CMD [{% for cmd in image.run.cmd.split(' ') %}"{{ cmd }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+
+{% endif %}
+{% if image.run.workdir %}
+WORKDIR {{ image.run.workdir }}
+
+{% endif %}
+{% if image.run.user %}
+USER {{ image.run.user }}
+
+{% endif %}
+{% endif %}
+{% if image.ports %}
+EXPOSE {{ image.ports }}
+
+{% endif %}
+{% if image.healthcheck %}
+HEALTHCHECK --interval={{ image.healthcheck.interval }} \
+            --timeout={{ image.healthcheck.timeout }} \
+            --start-period={{ image.healthcheck.start_period }} \
+  CMD {{ image.healthcheck.cmd }}
+
+{% endif %}
+{% if not _any %}
+ADD . /
+{% endif %}

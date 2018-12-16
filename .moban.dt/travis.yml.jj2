@@ -1,0 +1,28 @@
+{% if image and image.run and image.run.cmd and image.run.cmd == 'coala --ci' %}
+{%   set is_lint_image = True %}
+{% else %}
+{%   set is_lint_image = False %}
+{% endif %}
+{% if is_lint_image %}
+{%   set lint_image = image.name + ':this' %}
+{% else %}
+{%   set lint_image = 'djangomobans/lint-image' %}
+{% endif %}
+sudo: false
+dist: xenial
+language: generic
+services: docker
+
+env:
+  global:
+    - IMAGE_NAME={{ image.name }}:this
+
+install:
+  - hooks/build
+
+script:
+  - docker images
+  - docker run -v=$(pwd):/app --workdir=/app {{ lint_image }}
+
+notifications:
+  email: false

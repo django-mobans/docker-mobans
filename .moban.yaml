@@ -1,0 +1,21 @@
+image:
+  name: django-mobans-empty-image
+  version: 0.1
+  maintainer: jayvdb@gmail.com
+  omit:
+    cmd: true
+    expose: true
+
+configuration:
+  configuration: .moban.yaml
+  template_dir:
+    - .moban.dt/
+targets:
+  - Dockerfile: Dockerfile.jj2
+  - .dockerfile_lint_rules.yaml: dockerfile_lint_rules.yaml.jj2
+  - .gitlab-ci.yml: gitlab-ci.yml.jj2
+  - .travis.yml: travis.yml.jj2
+copy:
+  - .coafile: .coafile
+  - .gitignore: .gitignore
+  - hooks/build: hooks/build
