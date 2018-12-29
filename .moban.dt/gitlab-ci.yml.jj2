@@ -40,7 +40,7 @@ test:image:
 {% else %}
 lint:
   stage: build
-  image: $CI_REGISTRY/jayvdb/lint-image
+  image: $CI_REGISTRY/django-mobans/lint-image
   before_script: []
   script: coala --ci
 {% endif %}
