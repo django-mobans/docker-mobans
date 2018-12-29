@@ -1,5 +1,9 @@
 {% set _list_types = ['list', 'CommentedSeq'] %}
 {% set _any = False %}
+{% if image.comment %}
+# {{ image.comment }}
+
+{% endif %}
 {% if image.parent %}
 FROM {{ image.parent }}
 {% elif image.python_version and image.node_version %}
@@ -58,13 +62,21 @@ RUN npm install -g \
 
 {% endif %}
 {% if image['copy'].__class__.__name__ in _list_types %}
+{% set bins = [] %}
 {% for entry in image['copy'] %}
 {%   set _any = True %}
 {%   for src, dest in entry.items() %}
 COPY {{ src }} {{ dest }}
 
+{%     if dest.endswith('/bin/') %}
+{%       set _ = bins.append(dest + '*') %}
+{%     endif %}
 {%   endfor %}
 {% endfor %}
+{%   if bins and image.set_executable_on_copy %}
+RUN chmod a+x {{ ' '.join(bins | unique) }}
+
+{%   endif %}
 {% endif %}
 {% for cmd in image.layers %}
 {% set _any = True %}
