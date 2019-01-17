@@ -3,9 +3,7 @@
 {% else %}
 {%   set is_lint_image = False %}
 {% endif %}
-{% if is_lint_image %}
-{%   set lint_image = image.name + ':this' %}
-{% else %}
+{% if not lint_image %}
 {%   set lint_image = 'djangomobans/lint-image' %}
 {% endif %}
 sudo: false
@@ -17,12 +15,18 @@ env:
   global:
     - IMAGE_NAME={{ image.name }}:this
 
-install:
-  - hooks/build
+{# This assumes the lint image already exists, so lint_image should be
+   overriden to bootstrap a new lint repo. #}
+before_script:
+  - docker run -v=$(pwd):/app --workdir=/app {{ lint_image }}
 
 script:
+  - hooks/build
   - docker images
-  - docker run -v=$(pwd):/app --workdir=/app {{ lint_image }}
+{% if is_lint_image %}
+  # Re-run lint using built image
+  - docker run -v=$(pwd):/app --workdir=/app $IMAGE_NAME
+{% endif %}
 
 notifications:
   email: false
