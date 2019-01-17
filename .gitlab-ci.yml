@@ -19,13 +19,14 @@ build:image:
   stage: build
   script:
     - docker build -t "$CURRENT_IMAGE_NAME" .
+    - docker images
     - docker push "$CURRENT_IMAGE_NAME"
 
 lint:
   stage: build
   image: $CI_REGISTRY/django-mobans/lint-image
   before_script: []
-  script: coala --ci
+  script: []
 
 release:image:
   stage: release
