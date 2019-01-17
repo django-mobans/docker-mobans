@@ -28,9 +28,34 @@ ENV {% for key, value in image.env.items() %}
 {% endif %}
 {% if image.apt %}
 {%   set _any = True %}
-RUN apt-get update && apt-get install --no-install-recommends -y \
-{%   for dep in image.apt %}
-  {{ dep }} \
+{%   if image.apt.__class__.__name__ in _list_types %}
+{%     set apt_packages = image.apt %}
+{%     set apt_packages_only = True %}
+{%   else %}
+{%     set apt_packages = image.apt.packages %}
+{%     set apt_packages_only = False %}
+{%   endif %}
+{%   if not apt_packages_only %}
+{%     set _emit_run = None %}
+{%     if image.apt['keys'].__class__.__name__ in _list_types %}
+{%       for key in image.apt['keys'] %}
+{{ 'RUN' if _emit_run == None else '  &&' }} wget -q -O - {{ key }} | apt-key add - \
+{%         set _emit_run = False %}
+{%       else %}
+{%         set _emit_run = True %}
+{%       endfor %}
+{%     endif %}{# image.apt['keys'] is a list #}
+{%     for line in image.apt.sources %}
+{{ 'RUN' if _emit_run else '  &&' }} sh -c 'echo "{{ line }}" >> /etc/apt/sources.list.d/extra.list' \
+{%       set _emit_run = False %}
+{%     endfor %}
+  && apt-get update \
+{%   else %}{# apt_packages_only #}
+RUN apt-get update \
+{%   endif %}{# apt_packages_only #}
+  && apt-get install --no-install-recommends -y \
+{%   for dep in apt_packages %}
+    {{ dep }} \
 {%   endfor %}
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
