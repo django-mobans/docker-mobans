@@ -78,8 +78,14 @@ RUN chmod a+x {{ ' '.join(bins | unique) }}
 
 {%   endif %}
 {% endif %}
-{% for cmd in image.layers %}
+{% for layer in image.layers %}
 {% set _any = True %}
+{%   if layer.__class__.__name__ in _list_types %}
+{%     set cmds = layer %}
+{%    else %}
+{%     set cmds = [layer] %}
+{%    endif %}
+{%    set cmd = ' \\\n  && '.join(cmds) %}
 RUN {{ cmd }}
 
 {% endfor %}
