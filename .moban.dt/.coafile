@@ -1,7 +1,22 @@
 [all]
-files = Dockerfile
+files = .coafile,
+  .dockerfile_lint_rules.yaml,
+  .gitignore,
+  .gitlab-ci.yml,
+  .moban.yaml,
+  .travis.yml,
+  Dockerfile,
+  LICENSE,
+  README.md,
+  hooks/*
+use_spaces = True
+indent_size = 2
+
+[all.whitespaces]
+bears = SpaceConsistencyBear
 
 [all.docker]
+files = Dockerfile
 bears = DockerfileLintBear
 dockerfile_lint_rule_file = .dockerfile_lint_rules.yaml
 
